@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天</title>
+    <script src="./jquery-2.0.3.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            box-sizing: border-box;
+        }
+
+        i,
+        em {
+            font-style: normal;
+        }
+
+        button {
+            border: 1px solid #ccc;
+            outline: none;
+            width: 100px;
+            height: 30px;
+            background-color: #fff;
+            border-radius: 10px;
+        }
+
+        input {
+            border: none;
+            outline: none;
+        }
+
+        .open {
+            width: 100px;
+            height: 30px;
+            border: 1px solid #ccc;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 10px;
+            margin: 100px auto;
+            display: none;
+        }
+
+        .open:hover {
+            background-color: #ccc;
+        }
+
+        .box {
+            width: 500px;
+            height: 500px;
+            border: 1px solid #ccc;
+            margin: 50px auto;
+            box-shadow: 0 0 5px 0 #ccc;
+        }
+
+        .nicheng {
+            background: #aae1f7;
+            color: #fff;
+            text-align: center;
+            line-height: 30px;
+        }
+
+        .xiugai,
+        .qd {
+            width: 50px;
+            height: 20px;
+            font-size: 12px;
+            border-radius: 5px;
+            background-color: transparent;
+            color: rgb(80, 150, 241);
+            border: 0;
+        }
+
+        .jl {
+            width: 100%;
+            height: 60%;
+            border-bottom: 1px solid #ccc;
+            overflow-y: auto;
+            background-color: rgb(243, 237, 237)
+        }
+
+        .jl li {
+            padding: 5px;
+            color: rgb(43, 35, 35);
+        }
+
+        .name {
+            color: rgb(43, 35, 35);
+        }
+
+        .cont {
+            display: inline-block;
+            color: rgb(54, 46, 30);
+            padding: 0 10px;
+        }
+
+        .sr {
+            width: 100%;
+            height: 30%;
+            padding: 10px 5px;
+        }
+
+        textarea {
+            width: 100%;
+            border: none;
+            outline: none;
+            height: 70%;
+            resize: none;
+            font-size: 20px;
+        }
+
+        .but {
+            width: 100%;
+            height: 30%;
+            text-align: right;
+            margin-top: 10px;
+        }
+
+        .but2 {
+            background-color: rgb(64, 144, 219);
+            color: #fff;
+        }
+
+        button:hover {
+            background: rgba(206, 204, 204, 0.4);
+        }
+
+        .but2:hover {
+            color: #000;
+        }
+
+        .ts {
+            color: rgb(219, 106, 54);
+        }
+
+        .xg {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <div class="open">打开窗口</div>
+        <div class="box">
+            <div class="nicheng">昵称 :
+                <span class="names">嘻嘻</span>
+                <button class="xiugai">修改</button>
+                <input type="text" name="name" style="display: none;" class="inp">
+                <button class="qd" style="display: none;" onclick="xg()">确定</button>
+            </div>
+            <ul class="jl">
+            </ul>
+            <div class="sr">
+                <textarea autofocus class="neir"></textarea>
+                <div class="but">
+                    <button class="but1">关闭</button>
+                    <button class="but2" onclick="fs()" onkeydown="fs()">发送</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    $('.but1').click(function () {
+        $('.box').hide();
+        $('.open').show()
+    })
+    $('.open').click(function () {
+        $('.box').show();
+        $('.open').hide()
+    })
+    $('.xiugai').click(function () {
+        $('.inp').show();
+        $('.qd').show();
+        $('.xiugai').hide();
+        $('.inp')[0].focus()
+    })
+    $('.qd').click(function () {
+        $('.inp').hide();
+        $('.qd').hide();
+        $('.xiugai').show()
+    })
+    var ws = new WebSocket('ws://139.196.42.209:8090');
+    ws.onopen = function () {
+        console.log('连接成功')
+    }
+    ws.onerror = function () {
+        alert('连接失败')
+    }
+    ws.onmessage = function (mes) {
+        var data = JSON.parse(mes.data)
+        zs(data)
+    }
+    //发送数据
+    function fs() {
+        var val = $('.neir')[0].value
+        if (ws.readyState == WebSocket.OPEN) {
+            ws.send(val)
+        }
+        $('.neir')[0].value = '';
+        $('.neir')[0].focus()
+    }
+    //修改昵称
+    function xg() {
+        var val = $('.inp')[0].value
+        if(ws.readyState == WebSocket.OPEN){
+            ws.send('/nick_'+val)
+            $('.names').text(val) 
+            $('.inp')[0].value =''
+        }
+    }
+    //获取数据展示
+    function zs(data) {
+        console.log(data)
+        var str;
+        if (!data.message) return;
+        if (data.type == 'message') {
+            str = `<li><span class="name">${data.nickname}</span><i> : </i><p class="cont">${data.message}</p></li>`
+        } else if (data.type == 'notification') {
+            str = `<li><p class="ts">+${data.message}</p></li>`
+        } else if (data.type == 'nick_updata') {
+            str = `<li> <p class="xg">:) ${data.message}</p></li>`
+        }
+        if (str) {
+            $('.jl').append(str)
+        }
+    }
+
+</script>
+
+</html>
